@@ -164,6 +164,7 @@ end
 -- @tparam string|table data A multiline string or a table containing lines to be sent to the repl
 -- @warning changes cursor position if window is visible
 ll.send_to_repl = function(meta, data)
+  vim.notify("send_to_repl", vim.log.levels.WARN, { title = "pin" })
   local dt = data
   
   if data == string.char(12) then
@@ -181,6 +182,8 @@ ll.send_to_repl = function(meta, data)
   if window ~= -1 then
     vim.api.nvim_win_set_cursor(window, {vim.api.nvim_buf_line_count(meta.bufnr), 0})
   end
+
+  vim.notify("Got dt:" .. vim.inspect(dt), vim.log.levels.WARN, { title = "pin" })
 
   --TODO check vim.api.nvim_chan_send
   --TODO tool to get the progress of the chan send function
