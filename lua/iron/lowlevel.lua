@@ -172,18 +172,49 @@ ll.send_to_repl = function(meta, data)
     return
   end
 
+  local format_bin = function (str)
+    if type(str) ~= "string" then return nil end
+    local result = "Binary string length; " .. tostring(#str) .. " bytes\n"
+    local i = 1
+    local hex = ""
+    local chr = ""
+    while i <= #str do
+      local byte = str:byte(i)
+      hex = string.format("%s%2x ", hex, byte)
+      if byte < 32 then byte = string.byte(".") end
+      chr = chr .. string.char(byte)
+      if math.floor(i/16) == i/16 or i == #str then
+        -- reached end of line
+        hex = hex .. string.rep(" ", 16 * 3 - #hex)
+        chr = chr .. string.rep(" ", 16 - #chr)
+
+        result = result .. hex:sub(1, 8 * 3) .. "  " .. hex:sub(8*3+1, -1) .. " " .. chr:sub(1,8) .. " " .. chr:sub(9,-1) .. "\n"
+
+        hex = ""
+        chr = ""
+      end
+      i = i + 1
+    end
+    return result
+  end
+
+
   if type(data) == "string" then
+    vim.notify("Found string: " .. format_bin(data), vim.log.levels.WARN, { title = "pin" })
     dt = vim.split(data, '\n')
+    vim.notify("Got New dt after split: " .. vim.inspect(dt), vim.log.levels.WARN, { title = "pin" })
   end
 
   dt = format(meta.repldef, dt)
+  vim.notify("Got New dt after format: " .. vim.inspect(dt), vim.log.levels.WARN, { title = "pin" })
 
   local window = vim.fn.bufwinid(meta.bufnr)
   if window ~= -1 then
     vim.api.nvim_win_set_cursor(window, {vim.api.nvim_buf_line_count(meta.bufnr), 0})
   end
 
-  vim.notify("Got dt:" .. vim.inspect(dt), vim.log.levels.WARN, { title = "pin" })
+  -- pin
+  vim.notify("Got data to chansend:" .. vim.inspect(dt), vim.log.levels.WARN, { title = "pin" })
 
   --TODO check vim.api.nvim_chan_send
   --TODO tool to get the progress of the chan send function

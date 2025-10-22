@@ -243,6 +243,7 @@ end
 -- @param ft filetype (will be inferred if not supplied)
 -- @tparam string|table data data to be sent to the repl.
 local send = function(ft, data)
+  vim.notify("send", vim.log.levels.WARN, { title = "pin" })
   -- the buffer local variable `repl` is created by core.attach function to
   -- track non-default REPls.
   local meta = vim.b[0].repl
@@ -279,6 +280,7 @@ core.send = function(ft, data)
   if not is_windows() then
     send(ft, data)
   else
+    -- vim.notify("[core.send]", vim.log.levels.WARN, { title = "pin" })
     send(ft, data)
 
     -- This is a hack fix that allows windows ipython to run the commands sent
@@ -287,10 +289,16 @@ core.send = function(ft, data)
     -- repl (many as in more than 150 milliseconds worth). It appear that windows
     -- and powershell works fine though.
     vim.defer_fn(function()
+      -- vim.notify("2nd: " .. string.char(13), vim.log.levels.WARN, { title = "pin" })
       send(nil, string.char(13))
+
+      -- This will cause a bug when we send a file not in python
       if type(data) ~= "string" then
+        -- vim.notify("The data type is: " .. type(data), vim.log.levels.WARN, { title = "pin" })
+        -- vim.notify("3nd: " .. string.char(13), vim.log.levels.WARN, { title = "pin" })
         send(nil, string.char(13))
       end
+
     end, 150)
   end
 end

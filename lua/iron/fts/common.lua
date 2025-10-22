@@ -11,6 +11,10 @@ local common = {}
 ---@param substring string
 --- Checks in any sting in the table contains the substring
 local contains = function(table, substring)
+  -- vim.notify("Got table: " .. type(table), vim.log.levels.WARN, { title = "pin" })
+  if type(table) == "string" then
+    -- vim.notify("Got string: " .. table, vim.log.levels.WARN, { title = "pin" })
+  end
   for _, v in ipairs(table) do
     if string.find(v, substring) then
       return true
@@ -58,15 +62,19 @@ common.format = function(repldef, lines)
 
   -- passing the command is for python. this will not affect bracketed_paste.
   if repldef.format then
+    vim.notify("[1]", vim.log.levels.INFO, { title = "pin" })
     return repldef.format(lines, { command = repldef.command })
   elseif #lines == 1 then
+    vim.notify("[2]", vim.log.levels.INFO, { title = "pin" })
     new = lines
   else
+    vim.notify("[3]", vim.log.levels.INFO, { title = "pin" })
     new = extend(repldef.open, lines, repldef.close)
   end
 
   if #new > 0 then
     if not is_windows() then
+      vim.notify("Not in Windows!!!", vim.log.levels.ERROR, { title = "pin" })
       new[#new] = new[#new] .. cr
     end
   end
@@ -124,12 +132,41 @@ common.bracketed_paste_python = function(lines, extras)
       indent_open = true
     end
 
+  local format = function (str)
+    if type(str) ~= "string" then return nil end
+    local result = "Binary string length; " .. tostring(#str) .. " bytes\n"
+    local i = 1
+    local hex = ""
+    local chr = ""
+    while i <= #str do
+      local byte = str:byte(i)
+      hex = string.format("%s%2x ", hex, byte)
+      if byte < 32 then byte = string.byte(".") end
+      chr = chr .. string.char(byte)
+      if math.floor(i/16) == i/16 or i == #str then
+        -- reached end of line
+        hex = hex .. string.rep(" ", 16 * 3 - #hex)
+        chr = chr .. string.rep(" ", 16 - #chr)
+
+        result = result .. hex:sub(1, 8 * 3) .. "  " .. hex:sub(8*3+1, -1) .. " " .. chr:sub(1,8) .. " " .. chr:sub(9,-1) .. "\n"
+
+        hex = ""
+        chr = ""
+      end
+      i = i + 1
+    end
+    return result
+  end
+
+    -- vim.notify("Insert String: " .. line, vim.log.levels.WARN, { title = "pin" })
+    -- vim.notify("String Binaries: " .. format(line), vim.log.levels.WARN, { title = "pin" })
     table.insert(result, line)
 
     if windows and python or not windows then
       if i < #lines and indent_open and string.match(lines[i + 1], "^%s") == nil then
         if not python_close_indent_exceptions(lines[i + 1]) then
           indent_open = false
+          vim.notify("[1] Insert cr ", vim.log.levels.WARN, { title = "pin" })
           table.insert(result, cr)
         end
       end
@@ -138,12 +175,14 @@ common.bracketed_paste_python = function(lines, extras)
 
   local newline = windows and "\r\n" or cr
   if #result == 0 then  -- handle sending blank lines
+    vim.notify("[2] Insert cr ", vim.log.levels.WARN, { title = "pin" })
     table.insert(result, cr)
   elseif #result > 0 and result[#result]:sub(1, 1) == " " then
     -- Since the last line of code is indented, the Python REPL
     -- requires and extra newline in order to execute the code
     table.insert(result, newline)
   else
+    vim.notify("[3] Insert blank ", vim.log.levels.WARN, { title = "pin" })
     table.insert(result, "")
   end
 
