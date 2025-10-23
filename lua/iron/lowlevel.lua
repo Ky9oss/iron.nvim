@@ -5,6 +5,7 @@ local fts = require("iron.fts")
 local providers = require("iron.providers")
 local format = require("iron.fts.common").format
 local view = require("iron.view")
+local paste_mode_code = "\x1bOR"
 
 --- Low level functions for iron
 -- This is needed to reduce the complexity of the user API functions.
@@ -185,6 +186,14 @@ ll.send_to_repl = function(meta, data)
   --TODO check vim.api.nvim_chan_send
   --TODO tool to get the progress of the chan send function
   vim.fn.chansend(meta.job, dt)
+
+  -- KY9OSS
+  if dt[1] and string.find(dt[1], paste_mode_code) then
+    vim.notify("Send extra paste_mode_code", vim.log.levels.WARN, { title = "pin" })
+    vim.defer_fn(function()
+      vim.fn.chansend(meta.job, paste_mode_code .. "\r")
+    end, 200)
+  end
 
   if window ~= -1 then
     vim.api.nvim_win_set_cursor(window, {vim.api.nvim_buf_line_count(meta.bufnr), 0})

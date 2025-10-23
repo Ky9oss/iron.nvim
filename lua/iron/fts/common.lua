@@ -1,23 +1,29 @@
 local is_windows = require("iron.util.os").is_windows
 local extend = require("iron.util.tables").extend
+local contains = require("iron.util.tables").contains
 local open_code = "\27[200~"
 local close_code = "\27[201~"
+local paste_mode_code = "\x1bOR"
 local cr = "\13"
 
 local common = {}
 
 
----@param table table table of strings
----@param substring string
---- Checks in any sting in the table contains the substring
-local contains = function(table, substring)
-  for _, v in ipairs(table) do
-    if string.find(v, substring) then
-      return true
-    end
-  end
-  return false
-end
+-- ---@param table table table of strings
+-- ---@param substring string
+-- --- Checks in any sting in the table contains the substring
+-- local contains = function(table, substring)
+--   if type(table) == "string" then
+--     vim.notify("Got table:" .. table, vim.log.levels.WARN, { title = "pin" })
+--   else
+--     for _, v in ipairs(table) do
+--       if string.find(v, substring) then
+--         return true
+--       end
+--     end
+--   end
+--   return false
+-- end
 
 
 ---@param lines table
@@ -58,7 +64,12 @@ common.format = function(repldef, lines)
 
   -- passing the command is for python. this will not affect bracketed_paste.
   if repldef.format then
-    return repldef.format(lines, { command = repldef.command })
+    -- KY9OSS
+    if repldef.is_new_repl then
+      return repldef.format(lines, { command = repldef.command, is_new_repl = repldef.is_new_repl })
+    else
+      return repldef.format(lines, { command = repldef.command })
+    end
   elseif #lines == 1 then
     new = lines
   else
@@ -97,7 +108,10 @@ end
 common.bracketed_paste_python = function(lines, extras)
   local result = {}
 
+  vim.notify("EXTRAS:" .. vim.inspect(extras), vim.log.levels.WARN, { title = "pin" })
+
   local cmd = extras["command"]
+  local is_new_repl = extras["is_new_repl"]
   local pseudo_meta = { current_buffer = vim.api.nvim_get_current_buf()}
   if type(cmd) == "function" then
     cmd = cmd(pseudo_meta)
@@ -150,6 +164,14 @@ common.bracketed_paste_python = function(lines, extras)
   if ptpython then
     table.insert(result, 1, open_code)
     table.insert(result, close_code)
+    table.insert(result, "\n")
+  end
+
+  -- KY9OSS
+  if is_new_repl and not (is_windows and result[1] and result[1] == "\r") then
+    table.insert(result, 1, open_code)
+    table.insert(result, close_code)
+    table.insert(result, 1, paste_mode_code)
     table.insert(result, "\n")
   end
 
