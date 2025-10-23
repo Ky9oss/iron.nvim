@@ -169,10 +169,7 @@ common.bracketed_paste_python = function(lines, extras)
 
   -- KY9OSS
   if is_new_repl and not (is_windows and result[1] and result[1] == "\r") then
-    -- table.insert(result, 1, open_code)
-    -- table.insert(result, close_code)
     table.insert(result, 1, paste_mode_code)
-    table.insert(result, "\n")
   end
 
   return result

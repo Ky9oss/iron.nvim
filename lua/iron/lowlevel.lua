@@ -191,7 +191,7 @@ ll.send_to_repl = function(meta, data)
   if dt[1] and string.find(dt[1], paste_mode_code) then
     vim.notify("Send extra paste_mode_code", vim.log.levels.WARN, { title = "pin" })
     vim.defer_fn(function()
-      vim.fn.chansend(meta.job, paste_mode_code .. "\r")
+      vim.fn.chansend(meta.job, paste_mode_code .. "\r" )
     end, 200)
   end
 
